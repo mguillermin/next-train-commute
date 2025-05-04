@@ -62,3 +62,9 @@ body {
     justify-content: space-between;
     align-items: center; /* Vertically align items if needed */
 }
+
+button#switch-direction {
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    cursor: pointer;
+}

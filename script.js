@@ -1,53 +1,60 @@
 // Digitrafic API endpoint for trains departing from Helsinki (HKI)
 // Fetch the next 50 departing commuter trains, excluding others.
-const apiUrl = 'https://rata.digitraffic.fi/api/v1/live-trains/station/HKI?departing_trains=50&departed_trains=0&arriving_trains=0&arrived_trains=0&train_categories=Commuter'; // Be more specific
-const scheduleDiv = document.getElementById('train-list'); // Target the new train-list div
+const scheduleDiv = document.getElementById('train-list');
+const switchButton = document.getElementById('switch-direction');
+const mainHeading = document.getElementById('main-heading');
+
+let departureStation = 'HKI';
+let arrivalStation = 'LPV';
 
 async function fetchTrainSchedule() {
+    // Construct API URL based on the current departure station
+    const apiUrl = `https://rata.digitraffic.fi/api/v1/live-trains/station/${departureStation}?departing_trains=50&departed_trains=0&arriving_trains=0&arrived_trains=0&train_categories=Commuter`;
+    scheduleDiv.innerHTML = 'Loading...'; // Show loading message during fetch
+
     try {
         const response = await fetch(apiUrl);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const trains = await response.json();
-
         displaySchedule(trains);
     } catch (error) {
         console.error('Error fetching train data:', error);
-        scheduleDiv.innerHTML = 'Failed to load train schedule. Please try again later.';
+        scheduleDiv.innerHTML = `Failed to load train schedule for ${departureStation}. Please try again later.`;
     }
 }
 
 function displaySchedule(trains) {
-    scheduleDiv.innerHTML = ''; // Clear loading message from train-list
+    scheduleDiv.innerHTML = ''; // Clear loading message
 
     if (trains.length === 0) {
-        scheduleDiv.innerHTML = 'No upcoming commuter trains found departing from Helsinki.';
+        scheduleDiv.innerHTML = `No upcoming commuter trains found departing from ${departureStation}.`;
         return;
     }
 
-    // Filter trains that have a stop at Leppävaara (LPV)
+    // Filter trains that have a stop at the current arrivalStation
     const relevantTrains = trains
         .filter(train => {
-            // Check if the train's timeTableRows includes a stop at LPV
-            return train.timeTableRows.some(row => row.stationShortCode === 'LPV' && row.type === 'ARRIVAL' && row.trainStopping);
+            return train.timeTableRows.some(row => row.stationShortCode === arrivalStation && row.type === 'ARRIVAL' && row.trainStopping);
         })
         .sort((a, b) => {
-            // Sort by scheduled departure time from HKI
-            const depA = a.timeTableRows.find(row => row.stationShortCode === 'HKI' && row.type === 'DEPARTURE').scheduledTime;
-            const depB = b.timeTableRows.find(row => row.stationShortCode === 'HKI' && row.type === 'DEPARTURE').scheduledTime;
+            // Sort by scheduled departure time from the current departureStation
+            const depA = a.timeTableRows.find(row => row.stationShortCode === departureStation && row.type === 'DEPARTURE').scheduledTime;
+            const depB = b.timeTableRows.find(row => row.stationShortCode === departureStation && row.type === 'DEPARTURE').scheduledTime;
             return new Date(depA) - new Date(depB);
         });
 
     if (relevantTrains.length === 0) {
-        scheduleDiv.innerHTML = 'No upcoming commuter trains found stopping at Leppävaara.';
+        scheduleDiv.innerHTML = `No upcoming commuter trains found from ${departureStation} stopping at ${arrivalStation}.`;
         return;
     }
 
-    relevantTrains.slice(0, 10).forEach(train => { // Display next 10 relevant trains
-        const departureRow = train.timeTableRows.find(row => row.stationShortCode === 'HKI' && row.type === 'DEPARTURE');
+    relevantTrains.slice(0, 10).forEach(train => {
+        // Find the departure row for the current departureStation
+        const departureRow = train.timeTableRows.find(row => row.stationShortCode === departureStation && row.type === 'DEPARTURE');
 
-        if (!departureRow) return; // Skip if departure data is missing
+        if (!departureRow) return;
 
         const scheduledDeparture = new Date(departureRow.scheduledTime);
         const now = new Date();
@@ -62,12 +69,10 @@ function displaySchedule(trains) {
             departureDisplay = `in ${diffMinutes} min`;
         }
 
-        const trainType = train.commuterLineID || train.trainType + train.trainNumber; // Use Commuter Line ID if available
+        const trainType = train.commuterLineID || train.trainType + train.trainNumber;
 
         const trainDiv = document.createElement('div');
-        trainDiv.classList.add('train'); // Keep the train class for potential individual styling
-
-        // Use train-info class for flex alignment matching the header
+        trainDiv.classList.add('train');
         trainDiv.classList.add('train-info');
         trainDiv.innerHTML = `
             <span>${departureDisplay}</span>
@@ -79,5 +84,18 @@ function displaySchedule(trains) {
     });
 }
 
-// Fetch the schedule when the page loads
+// Event listener for the switch direction button
+switchButton.addEventListener('click', () => {
+    // Swap stations
+    [departureStation, arrivalStation] = [arrivalStation, departureStation];
+
+    // Update UI elements
+    mainHeading.textContent = `Next Trains: ${departureStation} to ${arrivalStation}`;
+    switchButton.textContent = `Show ${arrivalStation} -> ${departureStation}`;
+
+    // Fetch new schedule
+    fetchTrainSchedule();
+});
+
+// Initial fetch when the page loads
 fetchTrainSchedule();
