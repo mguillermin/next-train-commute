@@ -210,6 +210,14 @@ closeSettingsButton.addEventListener('click', closeSettings);
 // Save settings button
 saveSettingsButton.addEventListener('click', saveSettings);
 
+// Clear input on focus for better mobile UX
+depStationInput.addEventListener('focus', () => {
+    depStationInput.value = '';
+});
+arrStationInput.addEventListener('focus', () => {
+    arrStationInput.value = '';
+}); // Corrected closing parenthesis and brace
+
 // Initial load
 fetchStationData(); // Fetch station data first
 fetchTrainSchedule();     // Fetch initial schedule (might use defaults initially)
