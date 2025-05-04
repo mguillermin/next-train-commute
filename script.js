@@ -1,8 +1,8 @@
 // Digitrafic API endpoint for trains departing from Helsinki (HKI)
 // Fetch the next 50 departing commuter trains, excluding others.
 const scheduleDiv = document.getElementById('train-list');
-const switchButton = document.getElementById('switch-direction');
-const mainHeading = document.getElementById('main-heading');
+const switchButton = document.getElementById('switch-direction-btn'); // Target the new emoji button
+const directionText = document.getElementById('direction-text'); // Target the text span in H1
 
 let departureStation = 'HKI';
 let arrivalStation = 'LPV';
@@ -90,7 +90,8 @@ switchButton.addEventListener('click', () => {
     [departureStation, arrivalStation] = [arrivalStation, departureStation];
 
     // Update UI elements
-    mainHeading.textContent = `Next Trains: ${departureStation} to ${arrivalStation}`;
+    directionText.textContent = `${departureStation} → ${arrivalStation}`; // Update only the direction text
+    // No need to update button text anymore
 
     // Fetch new schedule
     fetchTrainSchedule();
