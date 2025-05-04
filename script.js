@@ -98,3 +98,16 @@ switchButton.addEventListener('click', () => {
 
 // Initial fetch when the page loads
 fetchTrainSchedule();
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/next-train-commute/sw.js') // Use the correct path for GitHub Pages
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
