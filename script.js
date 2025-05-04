@@ -91,7 +91,6 @@ switchButton.addEventListener('click', () => {
 
     // Update UI elements
     mainHeading.textContent = `Next Trains: ${departureStation} to ${arrivalStation}`;
-    switchButton.textContent = `Show ${arrivalStation} -> ${departureStation}`;
 
     // Fetch new schedule
     fetchTrainSchedule();

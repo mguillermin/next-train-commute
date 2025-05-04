@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Helsinki - Leppävaara Trains</title>
+    <title>Next Train Commute</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1 id="main-heading">Next Trains: Helsinki to Leppävaara</h1>
-    <button id="switch-direction">Show Leppävaara -> Helsinki</button>
-    <div id="train-schedule">
-        <div class="schedule-header">
-            <span>Departure</span>
-            <span>Track</span>
-            <span>Train</span>
-        </div>
-        <div id="train-list">
-            Loading...
+    <div class="container">
+        <h1 id="main-heading">Next Trains: HKI to LPV</h1>
+        <button id="switch-direction">Switch direction</button>
+        <div id="train-schedule">
+            <div class="schedule-header">
+                <span>Departure</span>
+                <span>Track</span>
+                <span>Train</span>
+            </div>
+            <div id="train-list">
+                Loading...
+            </div>
         </div>
     </div>
 
