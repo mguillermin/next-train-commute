@@ -1,4 +1,4 @@
-const CACHE_NAME = 'next-train-cache-v7'; // Increment cache version
+const CACHE_NAME = 'next-train-cache-v8'; // Increment cache version
 const urlsToCache = [
   '/', // Cache the root directory (served by GitHub Pages)
   '/next-train-commute/', // Explicitly cache the start URL

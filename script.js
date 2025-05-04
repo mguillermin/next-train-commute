@@ -1,244 +1,73 @@
+import { REFRESH_INTERVAL_MS } from './config.js';
+import { fetchStationData as apiFetchStationData, fetchTrainSchedule as apiFetchTrainSchedule } from './api.js';
 import {
-    API_BASE_URL,
-    DEFAULT_DEP_STATION,
-    DEFAULT_ARR_STATION,
-    LOCAL_STORAGE_DEP_KEY,
-    LOCAL_STORAGE_ARR_KEY,
-    REFRESH_INTERVAL_MS,
-    TRAINS_TO_FETCH,
-    TRAINS_TO_DISPLAY
-} from './config.js';
+    getDepartureStation,
+    getArrivalStation,
+    setStations,
+    saveStationsToLocalStorage,
+    swapStations,
+    setStationData,
+    getStationCode
+} from './state.js';
+import {
+    showSuggestions,
+    hideSuggestions,
+    updateDirectionDisplay,
+    updateLastUpdatedTime,
+    displaySchedule,
+    openSettings,
+    closeSettings,
+    showLoading,
+    showScheduleError,
+    // Import specific DOM elements needed for event listeners
+    depStationInput,
+    arrStationInput,
+    depSuggestions,
+    arrSuggestions
+} from './ui.js';
 
-// Digitrafic API endpoint for trains departing from Helsinki (HKI)
-// Fetch the next 50 departing commuter trains, excluding others.
-const scheduleDiv = document.getElementById('train-list');
-const switchButton = document.getElementById('switch-direction-btn'); // Target the new emoji button
-const directionText = document.getElementById('direction-text'); // Target the text span in H1
+// Get references to buttons needed for event listeners in this file
+const switchButton = document.getElementById('switch-direction-btn');
 const settingsButton = document.getElementById('settings-btn');
-const settingsPanel = document.getElementById('settings-panel');
-const depStationInput = document.getElementById('dep-station');
-const arrStationInput = document.getElementById('arr-station');
 const saveSettingsButton = document.getElementById('save-settings-btn');
 const closeSettingsButton = document.getElementById('close-settings-btn');
-const depSuggestions = document.getElementById('dep-suggestions');
-const arrSuggestions = document.getElementById('arr-suggestions');
 const refreshButton = document.getElementById('refresh-btn');
-const lastUpdatedText = document.getElementById('last-updated-text');
 
-// Load stations from localStorage or use defaults
-let departureStation = localStorage.getItem(LOCAL_STORAGE_DEP_KEY) || DEFAULT_DEP_STATION;
-let arrivalStation = localStorage.getItem(LOCAL_STORAGE_ARR_KEY) || DEFAULT_ARR_STATION;
-let stationData = []; // To store fetched station metadata
+// --- Core Logic --- //
 
-// Fetch all station metadata
-async function fetchStationData() {
-    const url = `${API_BASE_URL}/metadata/stations`;
+// Fetch and store station data
+async function loadStationData() {
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        // Filter for passenger stations and store
-        stationData = data.filter(station => station.passengerTraffic);
-        updateDirectionDisplay(); // Update display now that we might have names
+        const data = await apiFetchStationData();
+        setStationData(data);
+        updateDirectionDisplay(); // Update UI after data is loaded
         console.log('Station data loaded');
     } catch (error) {
-        console.error('Error fetching station data:', error);
-        // Handle error - maybe show a message to the user
+        console.error('Failed to load station data:', error);
+        // Optionally show an error message to the user via the UI module
     }
 }
 
-// Helper to get station name from code
-function getStationName(code) {
-    const station = stationData.find(s => s.stationShortCode === code);
-    return station ? station.stationName : code; // Fallback to code if not found
-}
-
-// Helper to get station code from name (or code)
-function getStationCode(input) {
-    if (!input) return null;
-    const upperInput = input.toUpperCase();
-    // First check if input is already a valid code
-    const isCode = stationData.some(s => s.stationShortCode === upperInput);
-    if (isCode) return upperInput;
-
-    // Otherwise, find by name
-    const station = stationData.find(s => s.stationName.toUpperCase() === upperInput);
-    return station ? station.stationShortCode : null; // Return null if not found
-}
-
-// Function to show suggestions
-function showSuggestions(inputValue, inputElement, suggestionsElement) {
-    // Add check: Only proceed if station data is loaded
-    if (stationData.length === 0) {
-        suggestionsElement.style.display = 'none';
-        return;
-    }
-
-    suggestionsElement.innerHTML = ''; // Clear previous suggestions
-    if (!inputValue) {
-        suggestionsElement.style.display = 'none';
-        return;
-    }
-
-    const lowerInputValue = inputValue.toLowerCase();
-    const filteredStations = stationData.filter(station =>
-        station.stationName.toLowerCase().includes(lowerInputValue) ||
-        station.stationShortCode.toLowerCase().includes(lowerInputValue)
-    ).slice(0, 10); // Limit suggestions
-
-    if (filteredStations.length > 0) {
-        filteredStations.forEach(station => {
-            const item = document.createElement('div');
-            item.classList.add('suggestion-item');
-            item.textContent = `${station.stationName} (${station.stationShortCode})`;
-            item.addEventListener('click', () => {
-                inputElement.value = station.stationName; // Use full name for display
-                suggestionsElement.style.display = 'none';
-                suggestionsElement.innerHTML = ''; // Clear after selection
-            });
-            suggestionsElement.appendChild(item);
-        });
-        suggestionsElement.style.display = 'block';
-    } else {
-        suggestionsElement.style.display = 'none';
-    }
-}
-
-// Function to hide suggestions
-function hideSuggestions(suggestionsElement) {
-    // Delay hiding slightly to allow click event on suggestion item to register
-    setTimeout(() => {
-        suggestionsElement.style.display = 'none';
-    }, 150);
-}
-
-// Function to update the main direction display
-function updateDirectionDisplay() {
-    // Use names if possible, fallback to codes
-    const depName = getStationName(departureStation);
-    const arrName = getStationName(arrivalStation);
-    directionText.textContent = `${depName} → ${arrName}`;
-}
-
-// Function to update the last updated time display
-function updateLastUpdatedTime(success = true) {
-    if (success) {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        lastUpdatedText.textContent = `Last updated: ${timeString}`;
-    } else {
-        lastUpdatedText.textContent = 'Update failed';
-    }
-}
-
-async function fetchTrainSchedule(isManualRefresh = false) {
-    // Construct API URL based on the current departure station
-    const apiUrl = `${API_BASE_URL}/live-trains/station/${departureStation}?departing_trains=${TRAINS_TO_FETCH}&departed_trains=0&arriving_trains=0&arrived_trains=0&train_categories=Commuter`;
+// Fetch and display train schedule
+async function refreshTrainSchedule(isManualRefresh = false) {
     if (isManualRefresh) {
-        scheduleDiv.innerHTML = 'Loading...'; // Show loading only on manual refresh
+        showLoading(); // Use UI function
     }
 
     try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const trains = await response.json();
-        displaySchedule(trains);
-        updateLastUpdatedTime(true); // Update time on success
+        const trains = await apiFetchTrainSchedule(getDepartureStation());
+        displaySchedule(trains); // Use UI function
+        updateLastUpdatedTime(true); // Use UI function
     } catch (error) {
-        console.error('Error fetching train data:', error);
-        // Optionally display a more subtle error than replacing the whole schedule
-        if (isManualRefresh) { // Only show error message in div on manual refresh
-             scheduleDiv.innerHTML = `Failed to load train schedule for ${departureStation}. Please try again later.`;
+        console.error('Failed to refresh train schedule:', error);
+        if (isManualRefresh) {
+            showScheduleError(); // Use UI function
         }
-        updateLastUpdatedTime(false); // Update time on failure
+        updateLastUpdatedTime(false); // Use UI function
     }
 }
 
-function displaySchedule(trains) {
-    scheduleDiv.innerHTML = ''; // Clear loading message
-
-    if (trains.length === 0) {
-        scheduleDiv.innerHTML = `No upcoming commuter trains found departing from ${departureStation}.`;
-        return;
-    }
-
-    // Filter trains that have a stop at the current arrivalStation
-    const relevantTrains = trains
-        .filter(train => {
-            return train.timeTableRows.some(row => row.stationShortCode === arrivalStation && row.type === 'ARRIVAL' && row.trainStopping);
-        })
-        .sort((a, b) => {
-            // Sort by scheduled departure time from the current departureStation
-            const depA = a.timeTableRows.find(row => row.stationShortCode === departureStation && row.type === 'DEPARTURE').scheduledTime;
-            const depB = b.timeTableRows.find(row => row.stationShortCode === departureStation && row.type === 'DEPARTURE').scheduledTime;
-            return new Date(depA) - new Date(depB);
-        });
-
-    if (relevantTrains.length === 0) {
-        scheduleDiv.innerHTML = `No upcoming commuter trains found from ${departureStation} stopping at ${arrivalStation}.`;
-        return;
-    }
-
-    relevantTrains.slice(0, TRAINS_TO_DISPLAY).forEach(train => {
-        // Find the departure row for the current departureStation
-        const departureRow = train.timeTableRows.find(row => row.stationShortCode === departureStation && row.type === 'DEPARTURE');
-
-        if (!departureRow) return;
-
-        const scheduledDeparture = new Date(departureRow.scheduledTime);
-        const now = new Date();
-        const diffMinutes = Math.round((scheduledDeparture - now) / (1000 * 60));
-
-        let departureDisplay;
-        if (diffMinutes < 0) {
-            departureDisplay = "Departed";
-        } else if (diffMinutes === 0) {
-            departureDisplay = "Now";
-        } else if (diffMinutes >= 60) {
-            const hours = Math.floor(diffMinutes / 60);
-            const minutes = diffMinutes % 60;
-            if (minutes === 0) {
-                departureDisplay = `in ${hours}h`; // Only show hours if minutes is 0
-            } else {
-                departureDisplay = `in ${hours}h ${minutes}min`; // Show hours and minutes
-            }
-        } else { // 0 < diffMinutes < 60
-            departureDisplay = `in ${diffMinutes} min`;
-        }
-
-        const trainType = train.commuterLineID || train.trainType + train.trainNumber;
-
-        const trainDiv = document.createElement('div');
-        trainDiv.classList.add('train');
-        trainDiv.classList.add('train-info');
-        trainDiv.innerHTML = `
-            <span>${departureDisplay}</span>
-            <span>${departureRow.commercialTrack || '-'}</span>
-            <span><strong>${trainType}</strong></span>
-        `;
-
-        scheduleDiv.appendChild(trainDiv);
-    });
-}
-
-// Function to show the settings panel
-function openSettings() {
-    // Pre-fill with current station names
-    depStationInput.value = getStationName(departureStation);
-    arrStationInput.value = getStationName(arrivalStation);
-    settingsPanel.hidden = false;
-}
-
-// Function to hide the settings panel
-function closeSettings() {
-    settingsPanel.hidden = true;
-}
-
-// Function to save settings
+// Save settings
 function saveSettings() {
     const depInput = depStationInput.value.trim();
     const arrInput = arrStationInput.value.trim();
@@ -247,81 +76,81 @@ function saveSettings() {
     const newArrCode = getStationCode(arrInput);
 
     if (newDepCode && newArrCode) {
-        departureStation = newDepCode;
-        arrivalStation = newArrCode;
+        setStations(newDepCode, newArrCode);
+        saveStationsToLocalStorage();
 
-        localStorage.setItem(LOCAL_STORAGE_DEP_KEY, departureStation);
-        localStorage.setItem(LOCAL_STORAGE_ARR_KEY, arrivalStation);
-
-        updateDirectionDisplay();
-        closeSettings();
-        fetchTrainSchedule(); // Fetch data for new stations
+        updateDirectionDisplay(); // Update UI
+        closeSettings(); // Update UI
+        refreshTrainSchedule(true); // Refresh data
     } else {
         alert('Invalid station name or code entered. Please select from the list or enter a valid 3-letter code.');
     }
 }
 
-// Event listener for the switch direction button
+// --- Event Listeners --- //
+
+// Switch direction button
 switchButton.addEventListener('click', () => {
-    // Swap stations
-    [departureStation, arrivalStation] = [arrivalStation, departureStation];
-
-    // Update UI elements
-    updateDirectionDisplay();
-
-    // Fetch new schedule
-    fetchTrainSchedule();
+    swapStations();
+    updateDirectionDisplay(); // Update UI
+    refreshTrainSchedule(true); // Refresh data
 });
 
 // Settings button
-settingsButton.addEventListener('click', openSettings);
+settingsButton.addEventListener('click', openSettings); // Use UI function
 
 // Close settings button
-closeSettingsButton.addEventListener('click', closeSettings);
+closeSettingsButton.addEventListener('click', closeSettings); // Use UI function
 
 // Save settings button
 saveSettingsButton.addEventListener('click', saveSettings);
 
 // Input event listeners for autocomplete
 depStationInput.addEventListener('input', () => {
-    showSuggestions(depStationInput.value, depStationInput, depSuggestions);
+    showSuggestions(depStationInput.value, depStationInput, depSuggestions); // Use UI function
 });
 arrStationInput.addEventListener('input', () => {
-    showSuggestions(arrStationInput.value, arrStationInput, arrSuggestions);
+    showSuggestions(arrStationInput.value, arrStationInput, arrSuggestions); // Use UI function
 });
 
 // Hide suggestions on blur
-depStationInput.addEventListener('blur', () => hideSuggestions(depSuggestions));
-arrStationInput.addEventListener('blur', () => hideSuggestions(arrSuggestions));
+depStationInput.addEventListener('blur', () => hideSuggestions(depSuggestions)); // Use UI function
+arrStationInput.addEventListener('blur', () => hideSuggestions(arrSuggestions)); // Use UI function
 
 // Clear input on focus and hide suggestions
 depStationInput.addEventListener('focus', () => {
     depStationInput.value = '';
-    depSuggestions.innerHTML = ''; // Clear suggestions visually
+    depSuggestions.innerHTML = ''; // Direct manipulation needed here or add UI function
     depSuggestions.style.display = 'none';
 });
 arrStationInput.addEventListener('focus', () => {
     arrStationInput.value = '';
-    arrSuggestions.innerHTML = ''; // Clear suggestions visually
+    arrSuggestions.innerHTML = ''; // Direct manipulation needed here or add UI function
     arrSuggestions.style.display = 'none';
 });
 
 // Refresh button listener
 refreshButton.addEventListener('click', () => {
-    fetchTrainSchedule(true); // Pass true for manual refresh
+    refreshTrainSchedule(true);
 });
 
-// Initial load
-fetchStationData(); // Fetch station data first
-fetchTrainSchedule(true);     // Fetch initial schedule (treat as manual to show loading)
+// --- Initial Load & Interval --- //
 
-// Set interval to refresh schedule every minute (60000 milliseconds)
-setInterval(() => fetchTrainSchedule(false), REFRESH_INTERVAL_MS);
+async function initializeApp() {
+    await loadStationData(); // Fetch station data first
+    refreshTrainSchedule(true); // Fetch initial schedule
+}
 
-// Register Service Worker
+initializeApp();
+
+// Set interval to refresh schedule
+setInterval(() => refreshTrainSchedule(false), REFRESH_INTERVAL_MS);
+
+// --- Service Worker --- //
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/next-train-commute/sw.js') // Use the correct path for GitHub Pages
+    navigator.serviceWorker.register('/next-train-commute/sw.js') // Adjust path if needed
       .then(registration => {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })
