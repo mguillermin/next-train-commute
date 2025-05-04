@@ -10,6 +10,30 @@ body {
     padding: 15px;
 }
 
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    border-bottom: 1px solid #aaa;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.schedule-header span,
+.train-info span {
+    flex-basis: 30%; /* Adjust basis for columns */
+    text-align: left;
+}
+
+.schedule-header span:first-child,
+.train-info span:first-child {
+    flex-basis: 40%; /* Give more space for train ID */
+}
+
+#train-list {
+    /* Container for the dynamic list */
+}
+
 .train {
     border-bottom: 1px solid #eee;
     padding: 10px 0;
@@ -22,4 +46,5 @@ body {
 .train-info {
     display: flex;
     justify-content: space-between;
+    align-items: center; /* Vertically align items if needed */
 }
