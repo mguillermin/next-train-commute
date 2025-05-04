@@ -1,26 +1,26 @@
-const CACHE_NAME = 'next-train-cache-v1';
+const CACHE_NAME = 'next-train-cache-v2'; // Increment cache version
 const urlsToCache = [
   '/', // Cache the root directory (served by GitHub Pages)
   '/next-train-commute/', // Explicitly cache the start URL
   '/next-train-commute/index.html',
   '/next-train-commute/style.css',
   '/next-train-commute/script.js',
-  '/next-train-commute/manifest.json'
-  // Add paths to icons once created, e.g., '/next-train-commute/icon-192x192.png'
+  '/next-train-commute/manifest.json',
+  '/next-train-commute/icon-192x192.png', // Add icons to cache
+  '/next-train-commute/icon-512x512.png'  // Add icons to cache
 ];
 
-// Install event: Cache core assets
+// Install event: Cache core assets and skip waiting
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        // AddAll can fail if any single resource fails to fetch
         return cache.addAll(urlsToCache).catch(error => {
           console.error('Failed to cache resources during install:', error);
-          // Optional: Handle specific errors or skip caching problematic resources
         });
       })
+      .then(() => self.skipWaiting()) // Force activation
   );
 });
 
@@ -59,7 +59,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Activate event: Clean up old caches
+// Activate event: Clean up old caches and claim clients
 self.addEventListener('activate', event => {
   var cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
@@ -67,10 +67,11 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Take control of open clients
   );
 });
