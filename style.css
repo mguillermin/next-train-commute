@@ -203,3 +203,30 @@ h1#main-heading {
 #close-settings-btn:hover {
     background-color: #5a6268;
 }
+
+/* Autocomplete Styles */
+.autocomplete-container {
+    position: relative; /* Context for absolute positioning */
+}
+
+.suggestions-list {
+    display: none; /* Hidden by default */
+    position: absolute;
+    border: 1px solid #ccc;
+    border-top: none;
+    background-color: white;
+    width: calc(100% - 2px); /* Match input width minus borders */
+    max-height: 150px; /* Limit height */
+    overflow-y: auto; /* Add scroll if needed */
+    z-index: 10; /* Appear above other content */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover {
+    background-color: #eee;
+}

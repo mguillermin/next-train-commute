@@ -9,8 +9,8 @@ const depStationInput = document.getElementById('dep-station');
 const arrStationInput = document.getElementById('arr-station');
 const saveSettingsButton = document.getElementById('save-settings-btn');
 const closeSettingsButton = document.getElementById('close-settings-btn');
-const depDatalist = document.getElementById('station-list-dep');
-const arrDatalist = document.getElementById('station-list-arr');
+const depSuggestions = document.getElementById('dep-suggestions');
+const arrSuggestions = document.getElementById('arr-suggestions');
 
 // Load stations from localStorage or use defaults
 let departureStation = localStorage.getItem('departureStation') || 'HKI';
@@ -28,25 +28,12 @@ async function fetchStationData() {
         const data = await response.json();
         // Filter for passenger stations and store
         stationData = data.filter(station => station.passengerTraffic);
-        populateDatalists(); // Populate datalists once data is fetched
         updateDirectionDisplay(); // Update display now that we might have names
         console.log('Station data loaded');
     } catch (error) {
         console.error('Error fetching station data:', error);
         // Handle error - maybe show a message to the user
     }
-}
-
-// Populate datalist elements
-function populateDatalists() {
-    depDatalist.innerHTML = ''; // Clear existing options
-    arrDatalist.innerHTML = '';
-    stationData.forEach(station => {
-        const option = document.createElement('option');
-        option.value = station.stationName; // The value user selects/types
-        depDatalist.appendChild(option.cloneNode(true));
-        arrDatalist.appendChild(option);
-    });
 }
 
 // Helper to get station name from code
@@ -66,6 +53,52 @@ function getStationCode(input) {
     // Otherwise, find by name
     const station = stationData.find(s => s.stationName.toUpperCase() === upperInput);
     return station ? station.stationShortCode : null; // Return null if not found
+}
+
+// Function to show suggestions
+function showSuggestions(inputValue, inputElement, suggestionsElement) {
+    // Add check: Only proceed if station data is loaded
+    if (stationData.length === 0) {
+        suggestionsElement.style.display = 'none';
+        return;
+    }
+
+    suggestionsElement.innerHTML = ''; // Clear previous suggestions
+    if (!inputValue) {
+        suggestionsElement.style.display = 'none';
+        return;
+    }
+
+    const lowerInputValue = inputValue.toLowerCase();
+    const filteredStations = stationData.filter(station =>
+        station.stationName.toLowerCase().includes(lowerInputValue) ||
+        station.stationShortCode.toLowerCase().includes(lowerInputValue)
+    ).slice(0, 10); // Limit suggestions
+
+    if (filteredStations.length > 0) {
+        filteredStations.forEach(station => {
+            const item = document.createElement('div');
+            item.classList.add('suggestion-item');
+            item.textContent = `${station.stationName} (${station.stationShortCode})`;
+            item.addEventListener('click', () => {
+                inputElement.value = station.stationName; // Use full name for display
+                suggestionsElement.style.display = 'none';
+                suggestionsElement.innerHTML = ''; // Clear after selection
+            });
+            suggestionsElement.appendChild(item);
+        });
+        suggestionsElement.style.display = 'block';
+    } else {
+        suggestionsElement.style.display = 'none';
+    }
+}
+
+// Function to hide suggestions
+function hideSuggestions(suggestionsElement) {
+    // Delay hiding slightly to allow click event on suggestion item to register
+    setTimeout(() => {
+        suggestionsElement.style.display = 'none';
+    }, 150);
 }
 
 // Function to update the main direction display
@@ -210,13 +243,29 @@ closeSettingsButton.addEventListener('click', closeSettings);
 // Save settings button
 saveSettingsButton.addEventListener('click', saveSettings);
 
-// Clear input on focus for better mobile UX
+// Input event listeners for autocomplete
+depStationInput.addEventListener('input', () => {
+    showSuggestions(depStationInput.value, depStationInput, depSuggestions);
+});
+arrStationInput.addEventListener('input', () => {
+    showSuggestions(arrStationInput.value, arrStationInput, arrSuggestions);
+});
+
+// Hide suggestions on blur
+depStationInput.addEventListener('blur', () => hideSuggestions(depSuggestions));
+arrStationInput.addEventListener('blur', () => hideSuggestions(arrSuggestions));
+
+// Clear input on focus and hide suggestions
 depStationInput.addEventListener('focus', () => {
     depStationInput.value = '';
+    depSuggestions.innerHTML = ''; // Clear suggestions visually
+    depSuggestions.style.display = 'none';
 });
 arrStationInput.addEventListener('focus', () => {
     arrStationInput.value = '';
-}); // Corrected closing parenthesis and brace
+    arrSuggestions.innerHTML = ''; // Clear suggestions visually
+    arrSuggestions.style.display = 'none';
+});
 
 // Initial load
 fetchStationData(); // Fetch station data first
