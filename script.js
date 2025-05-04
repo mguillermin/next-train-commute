@@ -1,6 +1,6 @@
 // Digitrafic API endpoint for trains departing from Helsinki (HKI)
-// We fetch upcoming commuter trains for the next 120 minutes.
-const apiUrl = 'https://rata.digitraffic.fi/api/v1/live-trains/station/HKI?minutes_before_departure=0&minutes_after_departure=120&train_categories=Commuter';
+// Fetch the next 50 departing commuter trains, excluding others.
+const apiUrl = 'https://rata.digitraffic.fi/api/v1/live-trains/station/HKI?departing_trains=50&departed_trains=0&arriving_trains=0&arrived_trains=0&train_categories=Commuter'; // Be more specific
 const scheduleDiv = document.getElementById('train-schedule');
 
 async function fetchTrainSchedule() {
