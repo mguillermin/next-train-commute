@@ -46,3 +46,27 @@ This app is designed to be easily deployed using GitHub Pages:
 
 *   **Service Worker Updates:** When making changes to cached files (`index.html`, `style.css`, `script.js`, `manifest.json`, icons, or `sw.js` itself), remember to increment the `CACHE_NAME` variable within `sw.js` to ensure the PWA updates correctly for users.
 *   **Local Testing:** Service workers require HTTPS or localhost. For local testing, use a simple local web server instead of opening `index.html` directly via `file://`. Many tools can provide this (e.g., `npx serve`, Python's `http.server`, VS Code Live Server extension).
+
+## License
+
+MIT License
+
+Copyright (c) 2025 Matthieu Guillermin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
