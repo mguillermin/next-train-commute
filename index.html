@@ -26,10 +26,16 @@
             <div class="modal-content">
                 <h2>Settings</h2>
                 <label for="dep-station">Departure Station:</label>
-                <input type="text" id="dep-station" name="dep-station" maxlength="3" placeholder="e.g., HKI">
+                <input type="text" id="dep-station" name="dep-station" list="station-list-dep" maxlength="50" placeholder="e.g., Helsinki or HKI">
+                <datalist id="station-list-dep">
+                    <!-- Options will be populated by JS -->
+                </datalist>
                 <br>
                 <label for="arr-station">Arrival Station:</label>
-                <input type="text" id="arr-station" name="arr-station" maxlength="3" placeholder="e.g., LPV">
+                <input type="text" id="arr-station" name="arr-station" list="station-list-arr" maxlength="50" placeholder="e.g., Leppävaara or LPV">
+                <datalist id="station-list-arr">
+                    <!-- Options will be populated by JS -->
+                </datalist>
                 <br>
                 <button id="save-settings-btn">Save</button>
                 <button id="close-settings-btn">Close</button>

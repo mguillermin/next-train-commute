@@ -9,14 +9,71 @@ const depStationInput = document.getElementById('dep-station');
 const arrStationInput = document.getElementById('arr-station');
 const saveSettingsButton = document.getElementById('save-settings-btn');
 const closeSettingsButton = document.getElementById('close-settings-btn');
+const depDatalist = document.getElementById('station-list-dep');
+const arrDatalist = document.getElementById('station-list-arr');
 
 // Load stations from localStorage or use defaults
 let departureStation = localStorage.getItem('departureStation') || 'HKI';
 let arrivalStation = localStorage.getItem('arrivalStation') || 'LPV';
+let stationData = []; // To store fetched station metadata
+
+// Fetch all station metadata
+async function fetchStationData() {
+    const url = 'https://rata.digitraffic.fi/api/v1/metadata/stations';
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        // Filter for passenger stations and store
+        stationData = data.filter(station => station.passengerTraffic);
+        populateDatalists(); // Populate datalists once data is fetched
+        updateDirectionDisplay(); // Update display now that we might have names
+        console.log('Station data loaded');
+    } catch (error) {
+        console.error('Error fetching station data:', error);
+        // Handle error - maybe show a message to the user
+    }
+}
+
+// Populate datalist elements
+function populateDatalists() {
+    depDatalist.innerHTML = ''; // Clear existing options
+    arrDatalist.innerHTML = '';
+    stationData.forEach(station => {
+        const option = document.createElement('option');
+        option.value = station.stationName; // The value user selects/types
+        depDatalist.appendChild(option.cloneNode(true));
+        arrDatalist.appendChild(option);
+    });
+}
+
+// Helper to get station name from code
+function getStationName(code) {
+    const station = stationData.find(s => s.stationShortCode === code);
+    return station ? station.stationName : code; // Fallback to code if not found
+}
+
+// Helper to get station code from name (or code)
+function getStationCode(input) {
+    if (!input) return null;
+    const upperInput = input.toUpperCase();
+    // First check if input is already a valid code
+    const isCode = stationData.some(s => s.stationShortCode === upperInput);
+    if (isCode) return upperInput;
+
+    // Otherwise, find by name
+    const station = stationData.find(s => s.stationName.toUpperCase() === upperInput);
+    return station ? station.stationShortCode : null; // Return null if not found
+}
 
 // Function to update the main direction display
 function updateDirectionDisplay() {
-    directionText.textContent = `${departureStation} → ${arrivalStation}`;
+    // Use names if possible, fallback to codes
+    const depName = getStationName(departureStation);
+    const arrName = getStationName(arrivalStation);
+    directionText.textContent = `${depName} → ${arrName}`;
 }
 
 async function fetchTrainSchedule() {
@@ -98,8 +155,9 @@ function displaySchedule(trains) {
 
 // Function to show the settings panel
 function openSettings() {
-    depStationInput.value = departureStation; // Pre-fill with current stations
-    arrStationInput.value = arrivalStation;
+    // Pre-fill with current station names
+    depStationInput.value = getStationName(departureStation);
+    arrStationInput.value = getStationName(arrivalStation);
     settingsPanel.hidden = false;
 }
 
@@ -110,15 +168,15 @@ function closeSettings() {
 
 // Function to save settings
 function saveSettings() {
-    const newDep = depStationInput.value.trim().toUpperCase();
-    const newArr = arrStationInput.value.trim().toUpperCase();
+    const depInput = depStationInput.value.trim();
+    const arrInput = arrStationInput.value.trim();
 
-    // Basic validation (3 letters)
-    if (newDep.length === 3 && /^[A-Z]+$/.test(newDep) &&
-        newArr.length === 3 && /^[A-Z]+$/.test(newArr)) {
+    const newDepCode = getStationCode(depInput);
+    const newArrCode = getStationCode(arrInput);
 
-        departureStation = newDep;
-        arrivalStation = newArr;
+    if (newDepCode && newArrCode) {
+        departureStation = newDepCode;
+        arrivalStation = newArrCode;
 
         localStorage.setItem('departureStation', departureStation);
         localStorage.setItem('arrivalStation', arrivalStation);
@@ -127,7 +185,7 @@ function saveSettings() {
         closeSettings();
         fetchTrainSchedule(); // Fetch data for new stations
     } else {
-        alert('Please enter valid 3-letter station codes (e.g., HKI, LPV).');
+        alert('Invalid station name or code entered. Please select from the list or enter a valid 3-letter code.');
     }
 }
 
@@ -153,8 +211,8 @@ closeSettingsButton.addEventListener('click', closeSettings);
 saveSettingsButton.addEventListener('click', saveSettings);
 
 // Initial load
-updateDirectionDisplay(); // Update display based on loaded/default stations
-fetchTrainSchedule();     // Fetch initial schedule
+fetchStationData(); // Fetch station data first
+fetchTrainSchedule();     // Fetch initial schedule (might use defaults initially)
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
