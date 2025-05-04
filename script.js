@@ -70,9 +70,9 @@ function displaySchedule(trains) {
         // Use train-info class for flex alignment matching the header
         trainDiv.classList.add('train-info');
         trainDiv.innerHTML = `
-            <span><strong>${trainType}</strong></span>
             <span>${departureDisplay}</span>
             <span>${departureRow.commercialTrack || '-'}</span>
+            <span><strong>${trainType}</strong></span>
         `;
 
         scheduleDiv.appendChild(trainDiv);

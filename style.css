@@ -25,9 +25,23 @@ body {
     text-align: left;
 }
 
-.schedule-header span:first-child,
-.train-info span:first-child {
-    flex-basis: 40%; /* Give more space for train ID */
+/* Give Departure Time less space */
+.schedule-header span:nth-child(1),
+.train-info span:nth-child(1) {
+    flex-basis: 25%;
+}
+
+/* Give Track less space */
+.schedule-header span:nth-child(2),
+.train-info span:nth-child(2) {
+    flex-basis: 20%;
+    text-align: center; /* Center track number */
+}
+
+/* Give Train ID more space */
+.schedule-header span:nth-child(3),
+.train-info span:nth-child(3) {
+    flex-basis: 55%;
 }
 
 #train-list {
