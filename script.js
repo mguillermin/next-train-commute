@@ -167,7 +167,15 @@ function displaySchedule(trains) {
             departureDisplay = "Departed";
         } else if (diffMinutes === 0) {
             departureDisplay = "Now";
-        } else {
+        } else if (diffMinutes >= 60) {
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+            if (minutes === 0) {
+                departureDisplay = `in ${hours}h`; // Only show hours if minutes is 0
+            } else {
+                departureDisplay = `in ${hours}h ${minutes}min`; // Show hours and minutes
+            }
+        } else { // 0 < diffMinutes < 60
             departureDisplay = `in ${diffMinutes} min`;
         }
 
@@ -270,6 +278,9 @@ arrStationInput.addEventListener('focus', () => {
 // Initial load
 fetchStationData(); // Fetch station data first
 fetchTrainSchedule();     // Fetch initial schedule (might use defaults initially)
+
+// Set interval to refresh schedule every minute (60000 milliseconds)
+setInterval(fetchTrainSchedule, 60000);
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
