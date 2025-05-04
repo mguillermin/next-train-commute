@@ -21,6 +21,7 @@ body {
     justify-content: center;
     align-items: center;
     margin-bottom: 20px;
+    position: relative; /* Needed for absolute positioning context if used */
 }
 
 h1#main-heading {
@@ -43,6 +44,16 @@ h1#main-heading {
 
 .switch-emoji-btn:hover {
     transform: scale(1.1); /* Slight grow effect on hover */
+}
+
+/* Add margin to the right of the switch button */
+#switch-direction-btn {
+    margin-right: 5px;
+}
+
+/* Style for settings button (uses .switch-emoji-btn) */
+#settings-btn {
+    /* Inherits styles from .switch-emoji-btn */
 }
 
 #train-schedule {
@@ -111,4 +122,84 @@ h1#main-heading {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* Modal Styles */
+.modal[hidden] {
+    display: none; /* Explicitly hide when hidden attribute is present */
+}
+
+.modal {
+    /* Hidden by default via HTML attribute */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: flex; /* Use flexbox to center content */
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto; /* Center vertically & horizontally */
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 8px;
+    width: 80%; /* Could be more specific */
+    max-width: 400px; /* Maximum width */
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.modal-content label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.modal-content input[type="text"] {
+    width: calc(100% - 22px); /* Full width minus padding/border */
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-transform: uppercase; /* Force uppercase */
+}
+
+.modal-content button {
+    padding: 10px 15px;
+    margin-top: 15px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+#save-settings-btn {
+    background-color: #28a745; /* Green */
+    color: white;
+}
+
+#save-settings-btn:hover {
+    background-color: #218838;
+}
+
+#close-settings-btn {
+    background-color: #6c757d; /* Gray */
+    color: white;
+}
+
+#close-settings-btn:hover {
+    background-color: #5a6268;
 }

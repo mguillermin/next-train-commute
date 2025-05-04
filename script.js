@@ -3,9 +3,21 @@
 const scheduleDiv = document.getElementById('train-list');
 const switchButton = document.getElementById('switch-direction-btn'); // Target the new emoji button
 const directionText = document.getElementById('direction-text'); // Target the text span in H1
+const settingsButton = document.getElementById('settings-btn');
+const settingsPanel = document.getElementById('settings-panel');
+const depStationInput = document.getElementById('dep-station');
+const arrStationInput = document.getElementById('arr-station');
+const saveSettingsButton = document.getElementById('save-settings-btn');
+const closeSettingsButton = document.getElementById('close-settings-btn');
 
-let departureStation = 'HKI';
-let arrivalStation = 'LPV';
+// Load stations from localStorage or use defaults
+let departureStation = localStorage.getItem('departureStation') || 'HKI';
+let arrivalStation = localStorage.getItem('arrivalStation') || 'LPV';
+
+// Function to update the main direction display
+function updateDirectionDisplay() {
+    directionText.textContent = `${departureStation} → ${arrivalStation}`;
+}
 
 async function fetchTrainSchedule() {
     // Construct API URL based on the current departure station
@@ -84,21 +96,65 @@ function displaySchedule(trains) {
     });
 }
 
+// Function to show the settings panel
+function openSettings() {
+    depStationInput.value = departureStation; // Pre-fill with current stations
+    arrStationInput.value = arrivalStation;
+    settingsPanel.hidden = false;
+}
+
+// Function to hide the settings panel
+function closeSettings() {
+    settingsPanel.hidden = true;
+}
+
+// Function to save settings
+function saveSettings() {
+    const newDep = depStationInput.value.trim().toUpperCase();
+    const newArr = arrStationInput.value.trim().toUpperCase();
+
+    // Basic validation (3 letters)
+    if (newDep.length === 3 && /^[A-Z]+$/.test(newDep) &&
+        newArr.length === 3 && /^[A-Z]+$/.test(newArr)) {
+
+        departureStation = newDep;
+        arrivalStation = newArr;
+
+        localStorage.setItem('departureStation', departureStation);
+        localStorage.setItem('arrivalStation', arrivalStation);
+
+        updateDirectionDisplay();
+        closeSettings();
+        fetchTrainSchedule(); // Fetch data for new stations
+    } else {
+        alert('Please enter valid 3-letter station codes (e.g., HKI, LPV).');
+    }
+}
+
 // Event listener for the switch direction button
 switchButton.addEventListener('click', () => {
     // Swap stations
     [departureStation, arrivalStation] = [arrivalStation, departureStation];
 
     // Update UI elements
-    directionText.textContent = `${departureStation} → ${arrivalStation}`; // Update only the direction text
-    // No need to update button text anymore
+    updateDirectionDisplay();
 
     // Fetch new schedule
     fetchTrainSchedule();
 });
 
-// Initial fetch when the page loads
-fetchTrainSchedule();
+// Settings button
+settingsButton.addEventListener('click', openSettings);
+
+// Close settings button
+closeSettingsButton.addEventListener('click', closeSettings);
+
+// Save settings button
+saveSettingsButton.addEventListener('click', saveSettings);
+
+// Initial load
+updateDirectionDisplay(); // Update display based on loaded/default stations
+fetchTrainSchedule();     // Fetch initial schedule
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {

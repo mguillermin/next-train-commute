@@ -17,8 +17,25 @@
             <h1 id="main-heading">
                 <span id="direction-text">HKI → LPV</span>
             </h1>
-            <button id="switch-direction-btn" class="switch-emoji-btn">↔️</button>
+            <button id="switch-direction-btn" class="switch-emoji-btn" title="Switch Direction">↔️</button>
+            <button id="settings-btn" class="switch-emoji-btn" title="Settings">⚙️</button> <!-- Settings Button -->
         </div>
+
+        <!-- Settings Modal/Panel (Initially Hidden) -->
+        <div id="settings-panel" class="modal" hidden>
+            <div class="modal-content">
+                <h2>Settings</h2>
+                <label for="dep-station">Departure Station:</label>
+                <input type="text" id="dep-station" name="dep-station" maxlength="3" placeholder="e.g., HKI">
+                <br>
+                <label for="arr-station">Arrival Station:</label>
+                <input type="text" id="arr-station" name="arr-station" maxlength="3" placeholder="e.g., LPV">
+                <br>
+                <button id="save-settings-btn">Save</button>
+                <button id="close-settings-btn">Close</button>
+            </div>
+        </div>
+
         <div id="train-schedule">
             <div class="schedule-header">
                 <span>Departure</span>
