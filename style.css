@@ -1,0 +1,25 @@
+/* Basic styles */
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+
+#train-schedule {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    padding: 15px;
+}
+
+.train {
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+}
+
+.train:last-child {
+    border-bottom: none;
+}
+
+.train-info {
+    display: flex;
+    justify-content: space-between;
+}
