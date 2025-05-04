@@ -5,7 +5,7 @@
   "start_url": "/next-train-commute/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3498db",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "icon-192x192.png",
