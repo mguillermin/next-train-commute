@@ -1,3 +1,14 @@
+import {
+    API_BASE_URL,
+    DEFAULT_DEP_STATION,
+    DEFAULT_ARR_STATION,
+    LOCAL_STORAGE_DEP_KEY,
+    LOCAL_STORAGE_ARR_KEY,
+    REFRESH_INTERVAL_MS,
+    TRAINS_TO_FETCH,
+    TRAINS_TO_DISPLAY
+} from './config.js';
+
 // Digitrafic API endpoint for trains departing from Helsinki (HKI)
 // Fetch the next 50 departing commuter trains, excluding others.
 const scheduleDiv = document.getElementById('train-list');
@@ -15,13 +26,13 @@ const refreshButton = document.getElementById('refresh-btn');
 const lastUpdatedText = document.getElementById('last-updated-text');
 
 // Load stations from localStorage or use defaults
-let departureStation = localStorage.getItem('departureStation') || 'HKI';
-let arrivalStation = localStorage.getItem('arrivalStation') || 'LPV';
+let departureStation = localStorage.getItem(LOCAL_STORAGE_DEP_KEY) || DEFAULT_DEP_STATION;
+let arrivalStation = localStorage.getItem(LOCAL_STORAGE_ARR_KEY) || DEFAULT_ARR_STATION;
 let stationData = []; // To store fetched station metadata
 
 // Fetch all station metadata
 async function fetchStationData() {
-    const url = 'https://rata.digitraffic.fi/api/v1/metadata/stations';
+    const url = `${API_BASE_URL}/metadata/stations`;
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -124,7 +135,7 @@ function updateLastUpdatedTime(success = true) {
 
 async function fetchTrainSchedule(isManualRefresh = false) {
     // Construct API URL based on the current departure station
-    const apiUrl = `https://rata.digitraffic.fi/api/v1/live-trains/station/${departureStation}?departing_trains=50&departed_trains=0&arriving_trains=0&arrived_trains=0&train_categories=Commuter`;
+    const apiUrl = `${API_BASE_URL}/live-trains/station/${departureStation}?departing_trains=${TRAINS_TO_FETCH}&departed_trains=0&arriving_trains=0&arrived_trains=0&train_categories=Commuter`;
     if (isManualRefresh) {
         scheduleDiv.innerHTML = 'Loading...'; // Show loading only on manual refresh
     }
@@ -172,7 +183,7 @@ function displaySchedule(trains) {
         return;
     }
 
-    relevantTrains.slice(0, 10).forEach(train => {
+    relevantTrains.slice(0, TRAINS_TO_DISPLAY).forEach(train => {
         // Find the departure row for the current departureStation
         const departureRow = train.timeTableRows.find(row => row.stationShortCode === departureStation && row.type === 'DEPARTURE');
 
@@ -239,8 +250,8 @@ function saveSettings() {
         departureStation = newDepCode;
         arrivalStation = newArrCode;
 
-        localStorage.setItem('departureStation', departureStation);
-        localStorage.setItem('arrivalStation', arrivalStation);
+        localStorage.setItem(LOCAL_STORAGE_DEP_KEY, departureStation);
+        localStorage.setItem(LOCAL_STORAGE_ARR_KEY, arrivalStation);
 
         updateDirectionDisplay();
         closeSettings();
@@ -305,7 +316,7 @@ fetchStationData(); // Fetch station data first
 fetchTrainSchedule(true);     // Fetch initial schedule (treat as manual to show loading)
 
 // Set interval to refresh schedule every minute (60000 milliseconds)
-setInterval(() => fetchTrainSchedule(false), 60000); // Pass false for auto-refresh
+setInterval(() => fetchTrainSchedule(false), REFRESH_INTERVAL_MS);
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
