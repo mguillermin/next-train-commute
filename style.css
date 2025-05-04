@@ -56,6 +56,23 @@ h1#main-heading {
     /* Inherits styles from .switch-emoji-btn */
 }
 
+/* Style for refresh button (uses .switch-emoji-btn) */
+#refresh-btn {
+    /* Inherits styles from .switch-emoji-btn */
+    margin-left: 5px; /* Add some space */
+}
+
+.last-updated-container {
+    text-align: center;
+    padding: 5px 0 10px 0; /* Add some padding */
+    border-bottom: 1px solid #eee; /* Separator line */
+}
+
+#last-updated-text {
+    font-size: 0.8em;
+    color: #6c757d; /* Muted color */
+}
+
 #train-schedule {
     margin-top: 20px;
     padding: 0;

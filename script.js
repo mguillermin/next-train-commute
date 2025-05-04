@@ -11,6 +11,8 @@ const saveSettingsButton = document.getElementById('save-settings-btn');
 const closeSettingsButton = document.getElementById('close-settings-btn');
 const depSuggestions = document.getElementById('dep-suggestions');
 const arrSuggestions = document.getElementById('arr-suggestions');
+const refreshButton = document.getElementById('refresh-btn');
+const lastUpdatedText = document.getElementById('last-updated-text');
 
 // Load stations from localStorage or use defaults
 let departureStation = localStorage.getItem('departureStation') || 'HKI';
@@ -109,10 +111,23 @@ function updateDirectionDisplay() {
     directionText.textContent = `${depName} → ${arrName}`;
 }
 
-async function fetchTrainSchedule() {
+// Function to update the last updated time display
+function updateLastUpdatedTime(success = true) {
+    if (success) {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        lastUpdatedText.textContent = `Last updated: ${timeString}`;
+    } else {
+        lastUpdatedText.textContent = 'Update failed';
+    }
+}
+
+async function fetchTrainSchedule(isManualRefresh = false) {
     // Construct API URL based on the current departure station
     const apiUrl = `https://rata.digitraffic.fi/api/v1/live-trains/station/${departureStation}?departing_trains=50&departed_trains=0&arriving_trains=0&arrived_trains=0&train_categories=Commuter`;
-    scheduleDiv.innerHTML = 'Loading...'; // Show loading message during fetch
+    if (isManualRefresh) {
+        scheduleDiv.innerHTML = 'Loading...'; // Show loading only on manual refresh
+    }
 
     try {
         const response = await fetch(apiUrl);
@@ -121,9 +136,14 @@ async function fetchTrainSchedule() {
         }
         const trains = await response.json();
         displaySchedule(trains);
+        updateLastUpdatedTime(true); // Update time on success
     } catch (error) {
         console.error('Error fetching train data:', error);
-        scheduleDiv.innerHTML = `Failed to load train schedule for ${departureStation}. Please try again later.`;
+        // Optionally display a more subtle error than replacing the whole schedule
+        if (isManualRefresh) { // Only show error message in div on manual refresh
+             scheduleDiv.innerHTML = `Failed to load train schedule for ${departureStation}. Please try again later.`;
+        }
+        updateLastUpdatedTime(false); // Update time on failure
     }
 }
 
@@ -275,12 +295,17 @@ arrStationInput.addEventListener('focus', () => {
     arrSuggestions.style.display = 'none';
 });
 
+// Refresh button listener
+refreshButton.addEventListener('click', () => {
+    fetchTrainSchedule(true); // Pass true for manual refresh
+});
+
 // Initial load
 fetchStationData(); // Fetch station data first
-fetchTrainSchedule();     // Fetch initial schedule (might use defaults initially)
+fetchTrainSchedule(true);     // Fetch initial schedule (treat as manual to show loading)
 
 // Set interval to refresh schedule every minute (60000 milliseconds)
-setInterval(fetchTrainSchedule, 60000);
+setInterval(() => fetchTrainSchedule(false), 60000); // Pass false for auto-refresh
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
