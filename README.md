@@ -1,4 +1,3 @@
-```markdown
 # Next Train Commute PWA
 
 A simple Progressive Web App (PWA) to quickly check the next departing commuter trains between two configurable stations in Finland.
@@ -47,4 +46,3 @@ This app is designed to be easily deployed using GitHub Pages:
 
 *   **Service Worker Updates:** When making changes to cached files (`index.html`, `style.css`, `script.js`, `manifest.json`, icons, or `sw.js` itself), remember to increment the `CACHE_NAME` variable within `sw.js` to ensure the PWA updates correctly for users.
 *   **Local Testing:** Service workers require HTTPS or localhost. For local testing, use a simple local web server instead of opening `index.html` directly via `file://`. Many tools can provide this (e.g., `npx serve`, Python's `http.server`, VS Code Live Server extension).
-```
